@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check": "node scripts/check-no-lyrics.mjs"
   },
   "dependencies": {
     "framer-motion": "^14.0.0",

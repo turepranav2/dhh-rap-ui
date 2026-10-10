@@ -4,7 +4,7 @@ Legend: [ ] todo, [~] in progress, [x] done
 Task format: **ID title** (size) | Files | Accept | Verify. One task = one builder session.
 
 ## Milestones
-- [ ] M0 Scaffold
+- [x] M0 Scaffold
 - [ ] M1 Clock + Timeline
 - [ ] M2 Spotify playback adapter (embed first) + Transport + offset tuning
 - [ ] M3 Stage + Scene registry + scene template + 3 placeholder scenes
@@ -56,7 +56,7 @@ Naam Sujal credited as featured artist in Stage footer and share page. Album art
 ### M0 Scaffold
 - [x] **M0.1 Project init** (S) — done 2026-10-10: Vite 8 / React 19.3 (pnpm resolved 19, not 18; works) / TS 6 (TS 7 was tried first; typescript-eslint doesn't support it yet) / Tailwind 4 via `@tailwindcss/vite` (no postcss/tailwind config files needed) / Vitest 5. `@types/node` added (type stubs only). Alias `@/*` -> `src/*`. | Create: `package.json`, `pnpm-lock.yaml`, `vite.config.ts`, `tsconfig.json` (strict, `noUncheckedIndexedAccess`), `index.html`, `src/main.tsx`, `src/App.tsx`, `tailwind.config.ts`, `postcss.config.js`, `src/index.css`. Deps ONLY from ARCHITECTURE.md: react, react-dom, zustand, framer-motion, tailwindcss, vitest, typescript, vite. (GSAP stays deferred; ask before adding.) | Accept: `pnpm dev` shows a 9:16 centred stage placeholder; scripts `dev/build/typecheck/test` exist. | Verify: run all four scripts; `test` may pass with no tests (`--passWithNoTests`).
 - [x] **M0.2 Folder layout + lint guards** (S) — done 2026-10-10: module tree stubbed (`export {}` + purpose comment), `src/types/song.ts` per DATA_SCHEMA, ESLint 10 + typescript-eslint flat config (`no-explicit-any` error, `pnpm lint`), audio patterns in `.gitignore`, `.gitattributes` LF. Verified: typecheck/lint/build clean, `git check-ignore` hits lyrics + audio, grep for `any` empty. | Create the ARCHITECTURE.md module tree with stub files (`src/core/clock/SongClock.ts` etc.), `src/scenes/_template/Scene.tsx`, `src/types/song.ts` (Song, Line, SceneProps, Theme per DATA_SCHEMA), `.gitignore` additions (`lyrics.local.json`, audio files, `.env*`), `eslint` flat config banning `any` (ask before adding eslint if not listed). | Accept: types match DATA_SCHEMA exactly; `pnpm typecheck` clean. | Verify: typecheck; `git check-ignore data/songs/101/lyrics.local.json` returns the path; grep repo for `: any` returns nothing.
-- [ ] **M0.3 Song loader + CI check for lyrics leakage** (S) | `src/data/loadSong.ts` (imports `song.json`, optionally loads `lyrics.local.json` via `import.meta.glob` so a missing file is fine), `scripts/check-no-lyrics.ts` (fails if tracked JSON other than `lyrics.local.json*` contains a `lyric`/`text` field or lines > 120 chars in `intent`), wire as `pnpm check`. | Accept: app boots with and without lyrics.local.json. | Verify: delete/restore the file locally; run `pnpm check` on clean and on a deliberately bad fixture.
+- [x] **M0.3 Song loader + CI check for lyrics leakage** (S) — done 2026-10-10: `loadSong(id)` via `import.meta.glob` (lyrics file absent -> `null`), `applyTheme` writes CSS vars, first Vitest test. `scripts/check-no-lyrics.mjs` (plain Node, `pnpm check`) fails on `lyric`/`lyrics`/`text` keys, `intent` > 120 chars, or a git-tracked `lyrics.local.json`; verified on clean, bad-fixture and tracked-file cases, and app boots with/without the local file. | `src/data/loadSong.ts` (imports `song.json`, optionally loads `lyrics.local.json` via `import.meta.glob` so a missing file is fine), `scripts/check-no-lyrics.ts` (fails if tracked JSON other than `lyrics.local.json*` contains a `lyric`/`text` field or lines > 120 chars in `intent`), wire as `pnpm check`. | Accept: app boots with and without lyrics.local.json. | Verify: delete/restore the file locally; run `pnpm check` on clean and on a deliberately bad fixture.
 
 ### M1 Clock + Timeline
 - [ ] **M1.1 Timeline engine** (M) | `src/core/timeline/timeline.ts`, `timeline.test.ts`. API: `createTimeline(lines)`, `activeIndexAt(t)`, `progressAt(t)`, `nextLineAt(t)` (pre-roll), `diff(prevT, nextT)` -> enter/exit events. Handle gaps between lines (returns -1, i.e. instrumental) and overlap/unsorted input (throws in dev). | Accept: tests cover empty list, before first, in gap, boundaries (start inclusive, end exclusive), last line, seek backward/forward, 1000 lines perf. | Verify: `pnpm test`.
@@ -98,4 +98,4 @@ Naam Sujal credited as featured artist in Stage footer and share page. Album art
 See [docs/scenes/PROTOCOL.md](scenes/PROTOCOL.md).
 
 ## Current focus
-M0 (M0.3 next). Owner can do the lyric paste and timing sync only after M4.
+M1 (M1.1 next). M0 complete. Owner can do the lyric paste and timing sync only after M4.
