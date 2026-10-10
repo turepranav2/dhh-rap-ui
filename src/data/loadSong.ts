@@ -1,13 +1,14 @@
 /**
- * Loads data/songs/<id>/song.json (committed) and, if present, the gitignored
- * data/songs/<id>/lyrics.local.json. A missing lyrics file is normal (public
- * builds ship without it) and resolves to `null`, never an error.
+ * Loads data/songs/<id>/song.json (committed) and, in the DEV SERVER ONLY, the
+ * gitignored lyrics.local.json through the author endpoint. Lyrics are never
+ * imported by the bundler, so they cannot end up in a production build; in
+ * production `lyrics` is always null.
  */
 import type { LocalLyrics, Song, Theme } from '@/types/song';
 
 export interface LoadedSong {
   song: Song;
-  /** null when lyrics.local.json is absent. Scenes must handle `lyric` undefined. */
+  /** null in production and whenever lyrics.local.json is absent. */
   lyrics: LocalLyrics | null;
 }
 
@@ -15,11 +16,6 @@ export interface LoadedSong {
 const songModules = import.meta.glob<{ default: unknown }>('../../data/songs/*/song.json', {
   eager: true,
 });
-
-// Lazy: only touched when a song is loaded; absent files simply have no entry.
-const lyricsModules = import.meta.glob<{ default: unknown }>(
-  '../../data/songs/*/lyrics.local.json',
-);
 
 function songIdFromPath(path: string): string | undefined {
   return /\/songs\/([^/]+)\//.exec(path)?.[1];
@@ -55,7 +51,7 @@ function isSong(v: unknown): v is Song {
   );
 }
 
-function isLocalLyrics(v: unknown): v is LocalLyrics {
+export function isLocalLyrics(v: unknown): v is LocalLyrics {
   return isRecord(v) && Object.values(v).every((t) => typeof t === 'string');
 }
 
@@ -66,22 +62,26 @@ export function listSongIds(): string[] {
     .sort();
 }
 
+/** Dev server only. Any failure (prod, no file, no server) is simply "no lyrics". */
+export async function fetchLocalLyrics(id: string): Promise<LocalLyrics | null> {
+  if (!import.meta.env.DEV) return null;
+  try {
+    const res = await fetch(`/__author/lyrics/${encodeURIComponent(id)}`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const json: unknown = await res.json();
+    const lyrics = isRecord(json) ? json['lyrics'] : undefined;
+    return isLocalLyrics(lyrics) ? lyrics : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function loadSong(id: string): Promise<LoadedSong> {
   const songEntry = Object.entries(songModules).find(([p]) => songIdFromPath(p) === id);
   if (!songEntry) throw new Error(`Unknown song "${id}". Known: ${listSongIds().join(', ')}`);
   const song = songEntry[1].default;
   if (!isSong(song)) throw new Error(`data/songs/${id}/song.json does not match the Song schema`);
-
-  const lyricsEntry = Object.entries(lyricsModules).find(([p]) => songIdFromPath(p) === id);
-  let lyrics: LocalLyrics | null = null;
-  if (lyricsEntry) {
-    const mod = await lyricsEntry[1]();
-    if (!isLocalLyrics(mod.default)) {
-      throw new Error(`data/songs/${id}/lyrics.local.json must be { lineId: string }`);
-    }
-    lyrics = mod.default;
-  }
-
+  const lyrics = await fetchLocalLyrics(id);
   return { song, lyrics };
 }
 

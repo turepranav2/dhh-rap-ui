@@ -14,17 +14,19 @@ import { ManualClock } from '@/core/clock/ManualClock';
 import { FIXTURE_DURATION_MS, FIXTURE_LINES } from '@/core/__fixtures__/lines';
 
 const EmbedSpike = lazy(() => import('@/dev/EmbedSpike'));
+const AuthorPage = lazy(() => import('@/author/AuthorPage'));
 
-const isEmbedSpikeRoute = () =>
-  window.location.pathname.replace(/\/+$/, '') === '/dev/embed' || window.location.hash === '#/dev/embed';
+const routeIs = (p: string) => window.location.pathname.replace(/\/+$/, '') === p || window.location.hash === `#${p}`;
+const isEmbedSpikeRoute = () => routeIs('/dev/embed');
+const isAuthorRoute = () => routeIs('/author');
 
 const songIdFromUrl = () => new URLSearchParams(window.location.search).get('song');
 
 export default function App() {
-  if (isEmbedSpikeRoute()) {
+  if (isEmbedSpikeRoute() || isAuthorRoute()) {
     return (
-      <Suspense fallback={<p className="p-4 font-mono text-sm">loading spike…</p>}>
-        <EmbedSpike />
+      <Suspense fallback={<p className="p-4 font-mono text-sm">loading…</p>}>
+        {isAuthorRoute() ? <AuthorPage /> : <EmbedSpike />}
       </Suspense>
     );
   }
@@ -86,6 +88,11 @@ function Shell() {
           <a className="opacity-50 underline" href="/dev/embed">
             embed spike
           </a>
+          {import.meta.env.DEV && (
+            <a className="opacity-50 underline" href={`/author?song=${songId}`}>
+              author
+            </a>
+          )}
         </div>
         <div className="stage-safe">
           {error && <p className="placeholder-note">error: {error}</p>}
