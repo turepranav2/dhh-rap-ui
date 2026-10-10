@@ -2,6 +2,8 @@ node_modules
 dist
 coverage
 .env*
+test-results
+playwright-report
 
 # Lyrics are copyrighted: text lives only in the local file, never tracked.
 data/songs/*/lyrics.local.json

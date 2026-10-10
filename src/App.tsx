@@ -72,6 +72,7 @@ function Shell() {
         <div className="absolute left-[6cqw] top-[6cqh] flex items-center gap-[2cqw] text-[3cqw]">
           <select
             className="rounded bg-white/10 px-[2cqw] py-[1cqh]"
+            data-testid="song-select"
             value={songId}
             onChange={(e) => setSongId(e.currentTarget.value)}
             aria-label="Song"
@@ -141,19 +142,20 @@ function DevScrubber() {
 
   return (
     <>
-      <p className="placeholder-title" style={{ opacity: activeLineId ? 1 : 0.25 }}>
+      <p className="placeholder-title" data-testid="active-id" style={{ opacity: activeLineId ? 1 : 0.25 }}>
         {activeLineId ?? '···'}
       </p>
       <div className="h-[1cqh] w-full bg-white/10">
         <div
           className="h-full bg-[var(--song-accent)]"
+          data-testid="progress-bar"
           style={{ width: `${(progress ?? 0) * 100}%`, transition: 'none' }}
         />
       </div>
       <p className="placeholder-sub">
         {song.title} · {song.artists.join(' · ')}
       </p>
-      <p className="placeholder-note">
+      <p className="placeholder-note" data-testid="status">
         {usingFixture ? 'fixture timeline' : `${song.lines.length} lines`} · lyrics {lyrics ? 'local' : 'none'} ·
         next {nextId} · {status}
         {demo ? ' · DEMO' : ''}
@@ -171,6 +173,7 @@ function DevScrubber() {
           className={`${btn} ${demo ? 'bg-white text-black' : 'bg-white/15'}`}
           onClick={toggleDemo}
           aria-pressed={demo}
+          data-testid="demo"
         >
           Demo
         </button>
@@ -183,6 +186,7 @@ function DevScrubber() {
           value={Math.round(positionMs)}
           onChange={(e) => clock.seek(Number(e.currentTarget.value))}
           aria-label="Scrub"
+          data-testid="scrub"
         />
         <span className="w-[16cqw] text-right text-[3cqw] tabular-nums opacity-70">{fmt(positionMs)}</span>
       </div>
