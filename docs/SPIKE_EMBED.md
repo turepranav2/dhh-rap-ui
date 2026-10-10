@@ -1,6 +1,6 @@
 # M2.1 Spike: Spotify iFrame Embed behaviour
 
-Owner fills the matrix from `/dev/embed` (dev server: `pnpm dev`, open `http://<host>:5173/dev/embed`). Run in this order and stop once the decision questions are answered: (a) desktop logged-in, (b) phone logged-in, (c) logged-out only if time allows. Press **copy log JSON** at the end of each run and paste the `stats` block below (not the full log).
+Owner fills this from `/dev/embed` (dev server: `pnpm dev`, open `http://<host>:5173/dev/embed`). Step-by-step in [RUN_SHEET.md](RUN_SHEET.md) sections 2-5. Per run: fill Device + Login, press **Run script** (play → 60 s → seek 60 → pause), then **Copy report** and paste the markdown under "Pasted reports". Order: (a) desktop logged-in, (b) phone logged-in, (c) logged-out only if time allows. Stop once the decision tree in RUN_SHEET.md §5 has an answer.
 
 ## Known facts before the spike (planner research, 2026-10-10)
 - Official docs: `playback_update` payload is `{playingURI, isPaused, isBuffering, duration, position}` (ms). No documented update interval. Safari blocks autoplay without a user gesture. Docs are silent on preview vs full playback.
@@ -29,11 +29,11 @@ Owner fills the matrix from `/dev/embed` (dev server: `pnpm dev`, open `http://<
 | c1 | desktop | logged-out | 101 | | | | | | | |
 | c2 | phone | logged-out | 101 | | | | | | | |
 
-## Pasted `stats` blocks
-```
-(paste here, one per run, label with run id)
-```
+## Pasted reports (from the **Copy report** button, one per run)
+
+(paste here)
 
 ## Conclusion (owner)
-- Primary clock for the demo: SpotifyEmbedClock / ManualClock demo mode (circle one)
-- Changes needed in M2.2 (e.g. preview detection threshold, snap threshold):
+- Branch chosen (RUN_SHEET §5): 1 / 2 / 3
+- DEFAULT_CLOCK for the public link: manual / embed
+- Changes needed in M2.2 (e.g. preview detection threshold, snap-only, offsetMs):
