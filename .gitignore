@@ -1,4 +1,15 @@
 node_modules
 dist
+coverage
 .env*
+
+# Lyrics are copyrighted: text lives only in the local file, never tracked.
 data/songs/*/lyrics.local.json
+
+# Owner-supplied audio is never committed or hosted.
+data/**/*.mp3
+data/**/*.wav
+data/**/*.m4a
+data/**/*.flac
+data/**/*.ogg
+data/**/*.aac
