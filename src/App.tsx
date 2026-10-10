@@ -1,25 +1,49 @@
 /**
- * M1 dev shell: boots the song, installs a ManualClock and shows a scrubber
- * so the timeline -> store -> UI path can be verified before any scene exists.
- * Uses the synthetic fixture timeline while song.json has no lines.
- * Replaced by Stage + Transport in M2/M3.
+ * Dev shell (M1/M2). Routes:
+ *   /            stage placeholder + ManualClock scrubber + song switcher + Demo mode
+ *   /dev/embed   Spotify iFrame API spike (also reachable as #/dev/embed)
+ * Replaced by Stage + Transport in M3.
+ *
+ * Uses the synthetic fixture timeline while a song.json has no lines.
  */
-import { useEffect, useState } from 'react';
-import { applyTheme, loadSong } from '@/data/loadSong';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { applyTheme, listSongIds, loadSong } from '@/data/loadSong';
 import { useSongStore } from '@/core/store';
 import { useSongClock } from '@/core/useSongClock';
 import { ManualClock } from '@/core/clock/ManualClock';
 import { FIXTURE_DURATION_MS, FIXTURE_LINES } from '@/core/__fixtures__/lines';
 
-const DEFAULT_SONG_ID = '101';
+const EmbedSpike = lazy(() => import('@/dev/EmbedSpike'));
+
+const isEmbedSpikeRoute = () =>
+  window.location.pathname.replace(/\/+$/, '') === '/dev/embed' || window.location.hash === '#/dev/embed';
+
+const songIdFromUrl = () => new URLSearchParams(window.location.search).get('song');
 
 export default function App() {
+  if (isEmbedSpikeRoute()) {
+    return (
+      <Suspense fallback={<p className="p-4 font-mono text-sm">loading spike…</p>}>
+        <EmbedSpike />
+      </Suspense>
+    );
+  }
+  return <Shell />;
+}
+
+function Shell() {
+  const ids = listSongIds();
+  const [songId, setSongId] = useState<string>(() => {
+    const fromUrl = songIdFromUrl();
+    return fromUrl && ids.includes(fromUrl) ? fromUrl : (ids[0] ?? '101');
+  });
   const [error, setError] = useState<string | null>(null);
   const song = useSongStore((s) => s.song);
 
   useEffect(() => {
     let cancelled = false;
-    loadSong(DEFAULT_SONG_ID)
+    setError(null);
+    loadSong(songId)
       .then(({ song, lyrics }) => {
         if (cancelled) return;
         applyTheme(song.theme);
@@ -27,6 +51,9 @@ export default function App() {
         const useFixture = song.lines.length === 0;
         store.setSong(song, lyrics, useFixture ? FIXTURE_LINES : undefined);
         store.setClock(new ManualClock({ durationMs: useFixture ? FIXTURE_DURATION_MS : song.durationMs }));
+        const url = new URL(window.location.href);
+        url.searchParams.set('song', songId);
+        window.history.replaceState(null, '', url);
       })
       .catch((e: unknown) => {
         if (!cancelled) setError(e instanceof Error ? e.message : String(e));
@@ -35,17 +62,34 @@ export default function App() {
       cancelled = true;
       useSongStore.getState().setClock(null);
     };
-  }, []);
+  }, [songId]);
 
   useSongClock();
 
   return (
     <main className="app-shell">
       <div className="stage" aria-label="Stage placeholder">
+        <div className="absolute left-[6cqw] top-[6cqh] flex items-center gap-[2cqw] text-[3cqw]">
+          <select
+            className="rounded bg-white/10 px-[2cqw] py-[1cqh]"
+            value={songId}
+            onChange={(e) => setSongId(e.currentTarget.value)}
+            aria-label="Song"
+          >
+            {ids.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
+            ))}
+          </select>
+          <a className="opacity-50 underline" href="/dev/embed">
+            embed spike
+          </a>
+        </div>
         <div className="stage-safe">
           {error && <p className="placeholder-note">error: {error}</p>}
           {!error && !song && <p className="placeholder-note">loading…</p>}
-          {song && <DevScrubber />}
+          {song && song.id === songId && <DevScrubber />}
         </div>
       </div>
     </main>
@@ -68,10 +112,32 @@ function DevScrubber() {
   const progress = useSongStore((s) => s.progress);
   const nextIndex = useSongStore((s) => s.nextIndex);
   const timeline = useSongStore((s) => s.timeline);
+  const [demo, setDemo] = useState(false);
+
+  // Demo mode: the guaranteed no-Spotify fallback. Auto-plays the ManualClock
+  // and restarts it when it ends, until switched off.
+  useEffect(() => {
+    if (!demo || !clock) return;
+    if (status === 'ended' || status === 'paused') clock.play();
+  }, [demo, clock, status]);
+
+  const toggleDemo = useCallback(() => {
+    if (!clock) return;
+    if (demo) {
+      setDemo(false);
+      clock.pause();
+    } else {
+      setDemo(true);
+      clock.seek(0);
+      clock.play();
+    }
+  }, [clock, demo]);
+
   if (!song || !clock) return null;
 
   const nextId = timeline?.lines[nextIndex]?.id ?? '—';
   const playing = status === 'playing';
+  const btn = 'rounded-full px-[4cqw] py-[1.5cqh] text-[3.5cqw] font-bold';
 
   return (
     <>
@@ -90,14 +156,23 @@ function DevScrubber() {
       <p className="placeholder-note">
         {usingFixture ? 'fixture timeline' : `${song.lines.length} lines`} · lyrics {lyrics ? 'local' : 'none'} ·
         next {nextId} · {status}
+        {demo ? ' · DEMO' : ''}
       </p>
       <div className="flex items-center gap-[2cqw]">
         <button
           type="button"
-          className="rounded-full bg-[var(--song-accent)] px-[4cqw] py-[1.5cqh] text-[3.5cqw] font-bold text-black"
+          className={`${btn} bg-[var(--song-accent)] text-black`}
           onClick={() => (playing ? clock.pause() : clock.play())}
         >
           {playing ? 'Pause' : 'Play'}
+        </button>
+        <button
+          type="button"
+          className={`${btn} ${demo ? 'bg-white text-black' : 'bg-white/15'}`}
+          onClick={toggleDemo}
+          aria-pressed={demo}
+        >
+          Demo
         </button>
         <input
           type="range"

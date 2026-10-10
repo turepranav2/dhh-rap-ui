@@ -8,6 +8,7 @@ const SONG: Song = {
   id: 'test',
   title: 't',
   artists: ['a'],
+  voices: ['a'],
   album: 'b',
   trackNumber: 1,
   durationMs: FIXTURE_DURATION_MS,

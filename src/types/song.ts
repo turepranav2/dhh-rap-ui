@@ -39,11 +39,16 @@ export interface Line {
 export interface Song {
   id: string;
   title: string;
+  /** Display credits, as on the release (e.g. "KR$NA"). */
   artists: string[];
+  /** Vocalist labels used in `Line.voice` (e.g. "Krsna"); drives the accent switch. */
+  voices: string[];
   album: string;
   trackNumber: number;
   durationMs: number;
   spotifyTrackId: string;
+  /** ISO date yyyy-mm-dd. */
+  releaseDate?: string;
   /** Adapter latency compensation, tuned in the Sync Tool. */
   offsetMs: number;
   theme: Theme;

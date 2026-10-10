@@ -6,10 +6,12 @@
   "id": "101",
   "title": "101",
   "artists": ["Karma", "Naam Sujal"],
+  "voices": ["Karma", "Naam Sujal"],
   "album": "MAD DAWG",
   "trackNumber": 8,
   "durationMs": 225000,
   "spotifyTrackId": "47TOcXCzgTPkbAkSZv0BCl",
+  "releaseDate": "2026-10-08",
   "offsetMs": 0,
   "theme": { "bg": "#0b0b0f", "fg": "#f5f5f5", "accent": "#ff3b30", "font": "Space Grotesk" },
   "sections": [{ "id": "intro", "label": "Intro", "startMs": 0 }],
@@ -27,7 +29,7 @@
   ]
 }
 ```
-`voice` matters on a feature track: Karma vs Naam Sujal can have different accent colours.
+`voice` matters on a feature track: Karma vs Naam Sujal can have different accent colours. `artists` are display credits as released; `voices` are the labels a `Line.voice` may use (one per vocalist, e.g. Kaha Tak: Krsna / Jokhay / Umair). `releaseDate` is optional. Songs are discovered by folder: any `data/songs/<id>/song.json` is loadable and selectable in the dev UI.
 
 ## data/songs/<id>/lyrics.local.json (GITIGNORED)
 ```json

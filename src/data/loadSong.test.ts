@@ -3,7 +3,15 @@ import { listSongIds, loadSong } from './loadSong';
 
 describe('loadSong', () => {
   it('lists the committed songs', () => {
-    expect(listSongIds()).toContain('101');
+    expect(listSongIds()).toEqual(['101', 'kaha-tak']);
+  });
+
+  it('loads kaha-tak with three voices and a distinct accent from 101', async () => {
+    const [a, b] = await Promise.all([loadSong('101'), loadSong('kaha-tak')]);
+    expect(b.song.spotifyTrackId).toBe('1EvFCT12WiFT649pC9wsPV');
+    expect(b.song.voices).toEqual(['Krsna', 'Jokhay', 'Umair']);
+    expect(b.song.durationMs).toBe(214_000);
+    expect(b.song.theme.accent).not.toBe(a.song.theme.accent);
   });
 
   it('loads 101 with a schema-valid song and lyrics either null or a string map', async () => {

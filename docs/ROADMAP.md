@@ -9,7 +9,7 @@ Task format: **ID title** (size) | Files | Accept | Verify. One task = one build
 - [ ] M2 Spotify playback adapter (embed first) + Transport + offset tuning
 - [ ] M3 Stage + Scene registry + scene template + 3 placeholder scenes
 - [ ] M4 Sync Tool
-- [ ] M5 Author all lines of "101"
+- [ ] M5 Author scenes: demo scope first (opening bars of "101" and "Kaha Tak", ~4-6 scenes each), full songs later (see D5)
 - [ ] M6 Polish
 - [ ] M7 Share
 
@@ -51,6 +51,13 @@ Planner note (not a decision): the scene pipeline works under A, B, D without co
 ### 2026-10-10 D4: Credits (OPEN, needs owner)
 Naam Sujal credited as featured artist in Stage footer and share page. Album art: used only as blurred backdrop (not overlaid with text) and in the Spotify metadata block; needs owner confirmation of rights. See Q4.
 
+### 2026-10-10 D5: Hackathon demo scope (owner decision, Mumbai Build Day)
+Hackathon demo targets two songs (101, Kaha Tak). Demo mode on ManualClock is the guaranteed fallback. Priority: a working public demo first, polish second. Consequences:
+- Songs are discovered from `data/songs/*/song.json`; `voices` added to the schema (Kaha Tak: Krsna / Jokhay / Umair). Scenes live in `src/scenes/<songId>/`.
+- Order after M2.1: M3 (Stage, registry, template) -> M4 (Sync Tool with per-song export) -> first scenes for the opening bars of both songs (~4-6 per song for the demo, not full songs) -> README deploy notes (Vercel, `pnpm build`, output `dist`, no lyric text and no audio in the bundle).
+- Repo is public at https://github.com/turepranav2/dhh-rap-ui (branch `main`). Links must stay public; the no-lyrics / no-audio rules therefore apply with no exceptions.
+- M2.2 (SpotifyEmbedClock) proceeds only if the spike (docs/SPIKE_EMBED.md) says the embed is usable; otherwise the demo runs on ManualClock + Demo mode.
+
 ## Task breakdown
 
 ### M0 Scaffold
@@ -64,7 +71,7 @@ Naam Sujal credited as featured artist in Stage footer and share page. Album art
 - [x] **M1.3 Drift-corrected extrapolation helper** (S) — done 2026-10-10: `extrapolate.ts` pure state machine `{createExtrapolator, positionAt, truePositionAt, applyReport, applySeek, setPlaying}`; snap > 250 ms else linear ease 200 ms with continuity at the report instant; paused reports snap. 11 tests, injected time. Note: a negative correction can run displayed time backwards up to 1.25x during the ease; scenes must tolerate small progress regressions. | `src/core/clock/extrapolate.ts` + tests. Pure function: given `lastPos, lastAt, now, playing, newReport` implements snap if error > 250 ms else ease ~200 ms (ARCHITECTURE.md). | Accept: deterministic tests with injected `nowFn`; no real timers. | Verify: `pnpm test`.
 
 ### M2 Spotify playback adapter
-- [ ] **M2.1 SPIKE: embed behaviour report** (S) | Create `src/dev/EmbedSpike.tsx` (route `/dev/embed`) logging every `playback_update` with `performance.now()` deltas, `duration`, `position`, buffering flags; test: logged-out (preview), logged-in free, logged-in Premium (owner device), desktop Chrome, Android Chrome, iOS Safari if available. Write findings into `docs/SPIKE_EMBED.md` (no lyrics). | Accept: report answers: update interval, jitter, does `seek()` work, does `play()` give full track, what `duration` says in preview mode (use as preview detector), does position lag audio. | Verify: owner reads the report; planner updates D1 if findings contradict.
+- [~] **M2.1 SPIKE: embed behaviour report** (S) — page built 2026-10-10: `/dev/embed` (also `#/dev/embed`) logs api/ready/playback_started/playback_update/actions with `performance.now()`, per-update `dt`, `driftMs` vs wall clock, preview flag (duration ≤ 31 s), track switcher for every song, copy/download JSON. `docs/SPIKE_EMBED.md` template pre-filled with known facts and decision questions Q1-Q7. Also in this pass: song switcher (`?song=<id>`), **Demo mode** button (ManualClock auto-play + loop; the no-Spotify fallback), `data/songs/kaha-tak`. OWNER: run the matrix (desktop logged-in, phone logged-in, logged-out if time) and fill the doc. | | Create `src/dev/EmbedSpike.tsx` (route `/dev/embed`) logging every `playback_update` with `performance.now()` deltas, `duration`, `position`, buffering flags; test: logged-out (preview), logged-in free, logged-in Premium (owner device), desktop Chrome, Android Chrome, iOS Safari if available. Write findings into `docs/SPIKE_EMBED.md` (no lyrics). | Accept: report answers: update interval, jitter, does `seek()` work, does `play()` give full track, what `duration` says in preview mode (use as preview detector), does position lag audio. | Verify: owner reads the report; planner updates D1 if findings contradict.
 - [ ] **M2.2 SpotifyEmbedClock** (L) | `src/core/clock/SpotifyEmbedClock.ts`, `src/player/SpotifyEmbed.tsx` (loads `https://open.spotify.com/embed/iframe-api/v1` once, `allow="encrypted-media"`, keeps embed visible with compact height), uses extrapolate.ts. Preview-mode detection exposes `status.previewOnly`. | Accept: implements SongClock; survives pause/seek/buffering/track end/restart; embed never hidden or covered. | Verify: manual test matrix from spike; unit tests with a mocked controller.
 - [ ] **M2.3 LocalAudioClock** (M) | `src/core/clock/LocalAudioClock.ts`, `src/player/LocalAudioPicker.tsx`. Uses `HTMLAudioElement.currentTime`; file via picker, object URL only. | Accept: same SongClock behaviour; nothing persisted or uploaded; audio extensions gitignored. | Verify: pick a local file, scrub, active line updates.
 - [ ] **M2.4 Transport + clock switcher + offset tuning** (M) | `src/player/Transport.tsx` (play/pause/scrub bar/time), `src/player/ClockSwitcher.tsx` (Embed | Local | Manual), offset +/- nudge (10 ms steps) writing to a store and exportable. Previews banner. | Accept: one tap starts playback on mobile; switching clocks keeps position; offset change is live. | Verify: manual on phone; Playwright optional only after asking about the dependency.
@@ -98,4 +105,4 @@ Naam Sujal credited as featured artist in Stage footer and share page. Album art
 See [docs/scenes/PROTOCOL.md](scenes/PROTOCOL.md).
 
 ## Current focus
-M2 (M2.1 spike next). M0, M1 complete. Owner can do the lyric paste and timing sync only after M4.
+M2.1 spike page built; owner runs the matrix. Builder proceeds to M3 in parallel (D5 order). M0, M1 complete. Owner can do the lyric paste and timing sync only after M4.

@@ -45,6 +45,7 @@ function isSong(v: unknown): v is Song {
     typeof v['id'] === 'string' &&
     typeof v['title'] === 'string' &&
     Array.isArray(v['artists']) &&
+    Array.isArray(v['voices']) &&
     typeof v['durationMs'] === 'number' &&
     typeof v['spotifyTrackId'] === 'string' &&
     typeof v['offsetMs'] === 'number' &&
