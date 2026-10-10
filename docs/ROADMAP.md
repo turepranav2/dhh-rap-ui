@@ -112,4 +112,4 @@ Hackathon demo targets two songs (101, Kaha Tak). Demo mode on ManualClock is th
 See [docs/scenes/PROTOCOL.md](scenes/PROTOCOL.md).
 
 ## Current focus
-M3.1 next (Stage + transitions), then M3.2/M3.3, then M4 leftovers, then 4-6 scenes per song, then deploy. Owner in parallel: RUN_SHEET §1-§6. M0, M1, H1-H5 complete; M2.1 waits on owner data. Owner can do the lyric paste and timing sync only after M4.
+PAUSED 2026-10-10 mid-M3; resume via docs/HANDOFF.md. M3.1-M3.3 are WIP (lint/typecheck/build ok, e2e to re-run), then M4 leftovers, then 4-6 scenes per song, then deploy. Owner in parallel: RUN_SHEET §1-§6. M0, M1, H1-H5 complete; M2.1 waits on owner data. Owner can do the lyric paste and timing sync only after M4.

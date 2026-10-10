@@ -24,11 +24,13 @@
       "voice": "Karma",
       "intent": "one-line paraphrase of what the bar means (NOT a quote)",
       "scene": "L01",
-      "tags": ["wordplay", "money"]
+      "tags": ["wordplay", "money"],
+      "transition": "default"
     }
   ]
 }
 ```
+`transition` (optional): `default` (140 ms crossfade+scale) | `cut` | `whip` (horizontal pan) | `match` (fast fade for match-cuts). Reduced motion always cuts. `theme.voiceAccents` (optional): `{ "Naam Sujal": "#ffd60a" }` swaps the accent per `Line.voice`.
 `voice` matters on a feature track: Karma vs Naam Sujal can have different accent colours. `artists` are display credits as released; `voices` are the labels a `Line.voice` may use (one per vocalist, e.g. Kaha Tak: Krsna / Jokhay / Umair). `releaseDate` is optional. Songs are discovered by folder: any `data/songs/<id>/song.json` is loadable and selectable in the dev UI.
 
 ## data/songs/<id>/lyrics.local.json (GITIGNORED)
@@ -39,6 +41,7 @@
 ## Scene contract
 ```ts
 export interface SceneProps {
+  lineId: string;            // e.g. "L07"
   progress: number;          // 0..1 across the line's duration
   lineDurationMs: number;
   active: boolean;           // false during pre-roll / exit

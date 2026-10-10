@@ -22,6 +22,7 @@ body,
 /* Mobile-first: on a portrait phone the stage is the whole viewport.
    On wider viewports it becomes a centred 9:16 column (DESIGN_GUIDE "Canvas"). */
 .app-shell {
+  position: relative;
   height: 100dvh;
   display: grid;
   place-items: center;
@@ -38,6 +39,15 @@ body,
   overflow: hidden;
 }
 
+/* Desktop: the stage sits over a soft accent glow instead of album art (D4 open). */
+@media (min-aspect-ratio: 9/16) {
+  .app-shell {
+    background:
+      radial-gradient(60% 50% at 50% 40%, color-mix(in srgb, var(--song-accent) 22%, transparent), transparent 70%),
+      var(--song-bg);
+  }
+}
+
 /* 6% safe padding, sized by the stage container, not the viewport. */
 .stage-safe {
   position: absolute;
@@ -45,6 +55,34 @@ body,
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  gap: 1cqh;
+}
+
+/* Scene layer: every mounted scene fills the stage; scenes lay out inside .scene-safe. */
+.stage-scenes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.scene-host {
+  position: absolute;
+  inset: 0;
+  will-change: transform, opacity;
+}
+.scene-safe {
+  position: absolute;
+  inset: 6cqh 6cqw;
+}
+
+/* Chrome (transport, embed) above the scenes, bottom-anchored, never covered. */
+.stage-chrome {
+  position: absolute;
+  left: 6cqw;
+  right: 6cqw;
+  bottom: 4cqh;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
   gap: 1cqh;
 }
 

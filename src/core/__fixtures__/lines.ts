@@ -17,3 +17,6 @@ export const FIXTURE_LINES: readonly TimelineLine[] = [
 ];
 
 export const FIXTURE_DURATION_MS = 12_000;
+
+/** Registry "song" folder holding the placeholder scenes for these ids: src/scenes/_fixture/. */
+export const FIXTURE_SCENE_SONG = '_fixture';

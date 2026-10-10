@@ -1,32 +1,37 @@
 /**
- * Dev shell (M1/M2). Routes:
- *   /            stage placeholder + ManualClock scrubber + song switcher + Demo mode
+ * Dev shell (M1-M3). Routes:
+ *   /            Stage + ManualClock scrubber + song switcher + Demo mode
  *   /dev/embed   Spotify iFrame API spike (also reachable as #/dev/embed)
- * Replaced by Stage + Transport in M3.
+ *   /author      lyrics paste + tap-to-sync (dev server only)
  *
- * Uses the synthetic fixture timeline while a song.json has no lines.
+ * Uses the synthetic fixture timeline (scenes in src/scenes/_fixture) while a
+ * song.json has no lines.
  */
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { applyTheme, listSongIds, loadSong } from '@/data/loadSong';
 import { useSongStore } from '@/core/store';
 import { useSongClock } from '@/core/useSongClock';
 import { ManualClock } from '@/core/clock/ManualClock';
-import { FIXTURE_DURATION_MS, FIXTURE_LINES } from '@/core/__fixtures__/lines';
+import { FIXTURE_DURATION_MS, FIXTURE_LINES, FIXTURE_SCENE_SONG } from '@/core/__fixtures__/lines';
+import Stage from '@/player/Stage';
+import { getScene } from '@/scenes/registry';
 
 const EmbedSpike = lazy(() => import('@/dev/EmbedSpike'));
 const AuthorPage = lazy(() => import('@/author/AuthorPage'));
+const SceneHarness = lazy(() => import('@/dev/SceneHarness'));
 
 const routeIs = (p: string) => window.location.pathname.replace(/\/+$/, '') === p || window.location.hash === `#${p}`;
 const isEmbedSpikeRoute = () => routeIs('/dev/embed');
 const isAuthorRoute = () => routeIs('/author');
+const isSceneHarnessRoute = () => routeIs('/dev/scene');
 
 const songIdFromUrl = () => new URLSearchParams(window.location.search).get('song');
 
 export default function App() {
-  if (isEmbedSpikeRoute() || isAuthorRoute()) {
+  if (isEmbedSpikeRoute() || isAuthorRoute() || isSceneHarnessRoute()) {
     return (
       <Suspense fallback={<p className="p-4 font-mono text-sm">loading…</p>}>
-        {isAuthorRoute() ? <AuthorPage /> : <EmbedSpike />}
+        {isAuthorRoute() ? <AuthorPage /> : isSceneHarnessRoute() ? <SceneHarness /> : <EmbedSpike />}
       </Suspense>
     );
   }
@@ -41,6 +46,7 @@ function Shell() {
   });
   const [error, setError] = useState<string | null>(null);
   const song = useSongStore((s) => s.song);
+  const usingFixture = useSongStore((s) => s.usingFixture);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,37 +74,38 @@ function Shell() {
 
   useSongClock();
 
+  const sceneSong = usingFixture ? FIXTURE_SCENE_SONG : songId;
+  const resolveScene = useCallback((sceneId: string) => getScene(sceneSong, sceneId), [sceneSong]);
+
   return (
     <main className="app-shell">
-      <div className="stage" aria-label="Stage placeholder">
-        <div className="absolute left-[6cqw] top-[6cqh] flex items-center gap-[2cqw] text-[3cqw]">
-          <select
-            className="rounded bg-white/10 px-[2cqw] py-[1cqh]"
-            data-testid="song-select"
-            value={songId}
-            onChange={(e) => setSongId(e.currentTarget.value)}
-            aria-label="Song"
-          >
-            {ids.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
-          </select>
-          <a className="opacity-50 underline" href="/dev/embed">
-            embed spike
+      <Stage resolveScene={resolveScene}>
+        {error && <p className="placeholder-note">error: {error}</p>}
+        {!error && !song && <p className="placeholder-note">loading…</p>}
+        {song && song.id === songId && <DevScrubber />}
+      </Stage>
+      <div className="absolute left-[max(1rem,calc(50vw-28.125vh))] top-4 z-20 flex items-center gap-3 text-xs">
+        <select
+          className="rounded bg-white/10 px-2 py-1"
+          data-testid="song-select"
+          value={songId}
+          onChange={(e) => setSongId(e.currentTarget.value)}
+          aria-label="Song"
+        >
+          {ids.map((id) => (
+            <option key={id} value={id}>
+              {id}
+            </option>
+          ))}
+        </select>
+        <a className="opacity-50 underline" href="/dev/embed">
+          embed spike
+        </a>
+        {import.meta.env.DEV && (
+          <a className="opacity-50 underline" href={`/author?song=${songId}`}>
+            author
           </a>
-          {import.meta.env.DEV && (
-            <a className="opacity-50 underline" href={`/author?song=${songId}`}>
-              author
-            </a>
-          )}
-        </div>
-        <div className="stage-safe">
-          {error && <p className="placeholder-note">error: {error}</p>}
-          {!error && !song && <p className="placeholder-note">loading…</p>}
-          {song && song.id === songId && <DevScrubber />}
-        </div>
+        )}
       </div>
     </main>
   );
@@ -149,22 +156,16 @@ function DevScrubber() {
 
   return (
     <>
-      <p className="placeholder-title" data-testid="active-id" style={{ opacity: activeLineId ? 1 : 0.25 }}>
-        {activeLineId ?? '···'}
-      </p>
-      <div className="h-[1cqh] w-full bg-white/10">
+      <div className="h-[0.6cqh] w-full bg-white/10">
         <div
           className="h-full bg-[var(--song-accent)]"
           data-testid="progress-bar"
           style={{ width: `${(progress ?? 0) * 100}%`, transition: 'none' }}
         />
       </div>
-      <p className="placeholder-sub">
-        {song.title} · {song.artists.join(' · ')}
-      </p>
       <p className="placeholder-note" data-testid="status">
-        {usingFixture ? 'fixture timeline' : `${song.lines.length} lines`} · lyrics {lyrics ? 'local' : 'none'} ·
-        next {nextId} · {status}
+        <span data-testid="active-id">{activeLineId ?? '···'}</span> · {usingFixture ? 'fixture timeline' : `${song.lines.length} lines`} ·
+        lyrics {lyrics ? 'local' : 'none'} · next {nextId} · {status}
         {demo ? ' · DEMO' : ''}
       </p>
       <div className="flex items-center gap-[2cqw]">

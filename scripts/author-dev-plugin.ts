@@ -74,7 +74,8 @@ function isLine(v: unknown): v is LineIn {
     typeof v['voice'] === 'string' &&
     typeof v['intent'] === 'string' &&
     typeof v['scene'] === 'string' &&
-    (v['tags'] === undefined || (Array.isArray(v['tags']) && v['tags'].every((t) => typeof t === 'string')))
+    (v['tags'] === undefined || (Array.isArray(v['tags']) && v['tags'].every((t) => typeof t === 'string'))) &&
+    (v['transition'] === undefined || ['default', 'cut', 'whip', 'match'].includes(String(v['transition'])))
   );
 }
 
@@ -122,7 +123,8 @@ export function authorDevPlugin(): Plugin {
             if (!isLyricsMap(parsed)) return send(res, 500, { error: 'lyrics.local.json is not { lineId: string }' });
             return send(res, 200, { lyrics: parsed });
           } catch {
-            return send(res, 404, { error: 'no local lyrics' });
+            // 200 with null, not 404: a missing file is normal and a 404 shows up as a console error.
+            return send(res, 200, { lyrics: null });
           }
         }
 

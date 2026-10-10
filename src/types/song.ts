@@ -12,7 +12,12 @@ export interface Theme {
   fg: string;
   accent: string;
   font: string;
+  /** Optional per-voice accent overrides; the Stage swaps `accent` by `Line.voice`. */
+  voiceAccents?: Record<string, string>;
 }
+
+/** How a line's scene enters (chosen per pair in the scene doc; DESIGN_GUIDE "Motion"). */
+export type TransitionKind = 'default' | 'cut' | 'whip' | 'match';
 
 export interface Section {
   id: string;
@@ -34,6 +39,8 @@ export interface Line {
   /** Scene component id; defaults to the line id. */
   scene: string;
   tags?: string[];
+  /** Enter transition for this line's scene. Default: 140 ms crossfade+scale. */
+  transition?: TransitionKind;
 }
 
 export interface Song {
@@ -62,6 +69,8 @@ export type LocalLyrics = Record<LineId, string>;
 
 /** Scene contract (docs/DATA_SCHEMA.md). */
 export interface SceneProps {
+  /** The line this scene instance is rendering (e.g. "L07"). */
+  lineId: LineId;
   /** 0..1 across the line's duration. The only timing input a scene gets. */
   progress: number;
   lineDurationMs: number;
