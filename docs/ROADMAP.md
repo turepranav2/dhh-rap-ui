@@ -5,7 +5,7 @@ Task format: **ID title** (size) | Files | Accept | Verify. One task = one build
 
 ## Milestones
 - [x] M0 Scaffold
-- [ ] M1 Clock + Timeline
+- [x] M1 Clock + Timeline
 - [ ] M2 Spotify playback adapter (embed first) + Transport + offset tuning
 - [ ] M3 Stage + Scene registry + scene template + 3 placeholder scenes
 - [ ] M4 Sync Tool
@@ -61,7 +61,7 @@ Naam Sujal credited as featured artist in Stage footer and share page. Album art
 ### M1 Clock + Timeline
 - [x] **M1.1 Timeline engine** (M) — done 2026-10-10: `createTimeline(lines)` -> `{activeIndexAt, progressAt (null when inactive), nextLineAt (first start strictly after t), diff (state delta, max 2 events, no replay on seek)}`. Validation throws `TimelineError` always (not only in dev): unsorted, overlap, end<start, dup id, non-finite. Zero-duration lines allowed but never active so an unsynced song.json boots. 23 tests incl. 1000-line linear-scan equivalence. | `src/core/timeline/timeline.ts`, `timeline.test.ts`. API: `createTimeline(lines)`, `activeIndexAt(t)`, `progressAt(t)`, `nextLineAt(t)` (pre-roll), `diff(prevT, nextT)` -> enter/exit events. Handle gaps between lines (returns -1, i.e. instrumental) and overlap/unsorted input (throws in dev). | Accept: tests cover empty list, before first, in gap, boundaries (start inclusive, end exclusive), last line, seek backward/forward, 1000 lines perf. | Verify: `pnpm test`.
 - [x] **M1.2 SongClock interface + ManualClock + store** (M) — done 2026-10-10: `SongClock {kind,status,durationMs,now,play,pause,seek,onSeek,onPlayPause,destroy}` + `createSignal`. `offsetMs` is NOT on the interface; it lives in the store and is applied only in `tick()`. `ManualClock` has injectable `nowFn` (7 tests). Zustand store derives `activeLineId/progress/nextIndex`; `useSongClock` is the sole rAF owner and loops only while playing. Fixture ids are `F01..F08` in `src/core/__fixtures__/lines.ts`; App.tsx dev scrubber uses it while song.json has no lines. Owner: run `pnpm dev`, press Play, watch the id/progress bar. | `SongClock.ts`, `ManualClock.ts`, `src/core/store.ts`, `src/core/useSongClock.ts` (rAF loop that reads `clock.now()` and writes `positionMs`/`activeLineId`; the only place rAF is allowed). | Accept: `SongClock = {now(), status, offsetMs, play, pause, seek, onSeek, onPlayPause, destroy}`; ManualClock scrubbing changes `activeLineId`; offsetMs applied centrally, not per-adapter. | Verify: unit tests for ManualClock; temporary dev scrubber in `App.tsx` shows active id changing against a fixture timeline in `src/core/__fixtures__/` (fake ids, no lyrics).
-- [ ] **M1.3 Drift-corrected extrapolation helper** (S) | `src/core/clock/extrapolate.ts` + tests. Pure function: given `lastPos, lastAt, now, playing, newReport` implements snap if error > 250 ms else ease ~200 ms (ARCHITECTURE.md). | Accept: deterministic tests with injected `nowFn`; no real timers. | Verify: `pnpm test`.
+- [x] **M1.3 Drift-corrected extrapolation helper** (S) — done 2026-10-10: `extrapolate.ts` pure state machine `{createExtrapolator, positionAt, truePositionAt, applyReport, applySeek, setPlaying}`; snap > 250 ms else linear ease 200 ms with continuity at the report instant; paused reports snap. 11 tests, injected time. Note: a negative correction can run displayed time backwards up to 1.25x during the ease; scenes must tolerate small progress regressions. | `src/core/clock/extrapolate.ts` + tests. Pure function: given `lastPos, lastAt, now, playing, newReport` implements snap if error > 250 ms else ease ~200 ms (ARCHITECTURE.md). | Accept: deterministic tests with injected `nowFn`; no real timers. | Verify: `pnpm test`.
 
 ### M2 Spotify playback adapter
 - [ ] **M2.1 SPIKE: embed behaviour report** (S) | Create `src/dev/EmbedSpike.tsx` (route `/dev/embed`) logging every `playback_update` with `performance.now()` deltas, `duration`, `position`, buffering flags; test: logged-out (preview), logged-in free, logged-in Premium (owner device), desktop Chrome, Android Chrome, iOS Safari if available. Write findings into `docs/SPIKE_EMBED.md` (no lyrics). | Accept: report answers: update interval, jitter, does `seek()` work, does `play()` give full track, what `duration` says in preview mode (use as preview detector), does position lag audio. | Verify: owner reads the report; planner updates D1 if findings contradict.
@@ -98,4 +98,4 @@ Naam Sujal credited as featured artist in Stage footer and share page. Album art
 See [docs/scenes/PROTOCOL.md](scenes/PROTOCOL.md).
 
 ## Current focus
-M1 (M1.3 next). M0 complete. Owner can do the lyric paste and timing sync only after M4.
+M2 (M2.1 spike next). M0, M1 complete. Owner can do the lyric paste and timing sync only after M4.
